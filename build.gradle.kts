@@ -5,9 +5,10 @@
  * For more details on building Java & JVM projects, please refer to https://docs.gradle.org/8.13/userguide/building_java_projects.html in the Gradle documentation.
  */
 
+buildDir = file("out")
+
 plugins {
-    // Apply the application plugin to add support for building a CLI application in Java.
-    application
+    java
 }
 
 repositories {
@@ -21,8 +22,10 @@ dependencies {
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    // This dependency is used by the application.
-    implementation(libs.guava)
+    // Jackson dependencies
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.9")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.9.9")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.9.9")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -32,12 +35,21 @@ java {
     }
 }
 
-application {
-    // Define the main class for the application.
-    mainClass = "org.example.App"
-}
-
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+// アプリケーションの配布設定
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "src.SimYukkuri"
+    }
+    
+    // 依存関係を含める
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    
+    // 出力先を設定
+    destinationDirectory.set(file("$buildDir/distributions"))
 }
